@@ -2,6 +2,24 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+[kinematic]: ./images/kinematic_equ.png
+[cte]: ./images/cte.png
+[orientation]: ./images/orientation_error.png
+
+## The Model
+![alt kinematic model][kinematic]
+
+![alt cross-track error][cte]
+
+![alt orientation error][orientation]
+
+## Parameters
+
+## Polynomial Fitting
+
+## Dealing with Latency
+
+---
 
 ## Dependencies
 
