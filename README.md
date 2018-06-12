@@ -12,6 +12,8 @@ This project involved developing a non-linear model predictive controller (MPC) 
 
 ![alt final lap][lap]
 
+[Full Video](./final_lap.mp4)
+
 ## The Model
 
 The MPC uses the global kinematic model. The global kinematic madel defines the state, actuators and how the state changes over time based on the previous state and current accuator inputs provided by the simulator using the equations:
