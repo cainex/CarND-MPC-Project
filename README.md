@@ -50,9 +50,9 @@ Using This model a cost function is derived from the reference state, acuator st
     }
 
 
-This is then used with an optimizer (Ipopt) to find this control inputs which minimize the cost function. 
+This is then used with an optimizer (Ipopt) to find the control inputs which minimize the cost function. 
 
-The cost function is further tuned by multiplying different elements of the cost functions by constants:
+The cost function is further tuned by multiplying different elements of the cost function by constants:
 
     const double tuneCte = 1.0;
     const double tuneEpsi = 10.0;
@@ -65,7 +65,7 @@ The cost function is further tuned by multiplying different elements of the cost
 
 ## Parameters (N, dt)
 
-The prediction horizon (T) is defined by two parameters, the number of timesteps in the horizon (N) and the time elapsed between each timestep (dt). The final values used are N=15, dt=0.05. This means there are 15 timesteps with a half-second duration between each timestep. Other values tried were the provided N=10, dt=0.1. The final values had a more precise fit, but shorter overall duration (.75 seconds vs. 1 second).
+The prediction horizon (T) is defined by two parameters, the number of timesteps in the horizon (N) and the time elapsed between each timestep (dt). The final values used are N=15, dt=0.05. This means there are 15 timesteps with a 50ms duration between each timestep. Other values tried were the provided N=10, dt=0.1. The final values had a more precise fit, but shorter overall duration (.75 seconds vs. 1 second).
 
 ## Polynomial Fitting and MPC Pre-processing
 
