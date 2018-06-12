@@ -14,19 +14,90 @@ This project involved developing a non-linear model predictive controller (MPC) 
 
 ## The Model
 
-The MPC uses the kinematic model 
+The MPC uses the global kinematic model. The global kinematic madel defines the state, actuators and how the state changes over time based on the previous state and current accuator inputs provided by the simulator using the equations:
 
 ![alt kinematic model][kinematic]
 
+The Cross Track Error (CTE) is the error between the desired track (waypoints provided by the simulator) and the vehicle's current position. The CTE update equation is:
+
 ![alt cross-track error][cte]
+
+The Orientation Error (ePSI) is the difference between the desired orientation and the current orientation. The ePSI update equation is:
 
 ![alt orientation error][orientation]
 
-## Parameters
+Using This model a cost function is derived from the reference state, acuator state and the gap between sequential actions:
 
-## Polynomial Fitting
+    // The part of the cost based on the reference state.
+    for (t = 0; t < N; t++) {
+      fg[0] += tuneCte * CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += tuneEpsi * CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += tuneV * CppAD::pow(vars[v_start + t] - ref_v, 2);
+    }
+
+    // Minimize the use of actuators.
+    for (t = 0; t < N - 1; t++) {
+      fg[0] += tuneDelta * CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += tuneA * CppAD::pow(vars[a_start + t], 2);
+    }
+
+    // Minimize the value gap between sequential actuations.
+    for (t = 0; t < N - 2; t++) {
+      fg[0] += tuneDeltaDiff * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += tuneADiff * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+    }
+
+
+This is then used with an optimizer (Ipopt) to find this control inputs which minimize the cost function. 
+
+The cost function is further tuned by multiplying different elements of the cost functions by constants:
+
+    const double tuneCte = 1.0;
+    const double tuneEpsi = 10.0;
+    const double tuneV = 1.0;
+    const double tuneDelta = 10.0;
+    const double tuneA = 10.0;
+    const double tuneDeltaDiff = 1000.0;
+    const double tuneADiff = 1.0;
+
+
+## Parameters (N, dt)
+
+The prediction horizon (T) is defined by two parameters, the number of timesteps in the horizon (N) and the time elapsed between each timestep (dt). The final values used are N=15, dt=0.05. This means there are 15 timesteps with a half-second duration between each timestep. Other values tried were the provided N=10, dt=0.1. The final values had a more precise fit, but shorter overall duration (.75 seconds vs. 1 second).
+
+## Polynomial Fitting and MPC Pre-processing
+
+In order to calculate the CTE and ePSI, we need to fit the waypoints to a polynomial. However, the waypoints are provided from the simulator in a global coordinate system. These are first transformed to the vehicle's coordinate system using:
+
+    void transformPoints(const std::vector<double> &ptsx, 
+                        const std::vector<double> &ptsy,
+                        const double &px,
+                        const double &py,
+                        const double &psi,
+                        const int &size,
+                        Eigen::VectorXd &t_ptsx,
+                        Eigen::VectorXd &t_ptsy) {
+
+      for (int i = 0; i < size; i++) {
+        double dx = ptsx[i] - px;
+        double dy = ptsy[i] - py;
+        t_ptsx(i) = dx * cos(-psi) - dy * sin(-psi);
+        t_ptsy(i) = dx * sin(-psi) + dy * cos(-psi);
+      }
+    }
+
+The result of this equation is a set of waypoints in the vehicle's coordinate position. A 3rd order polynomial is then fit to these waypoints using the provided polyeval() function.
+
+The CTE and ePSI are then calculated from the polynomial coefficients. The y and psi terms are dropped, because the waypoint coordinates have already been transformed to the vehicle's coordinate system (x,y,psi) = (0,0,0):
+
+    double cte = polyeval(coeffs, 0);
+    double epsi = -atan(coeffs[1]);
 
 ## Dealing with Latency
+
+In a real system, there is a latency between the acuator inputs being issued and when those inputs take effect. This is modelled by introducing a 100ms delay before the acutator inputs calculated by the MPC are sent to the simulator. 
+
+The output of the optimizer is a series of acuator inputs at each timestep of the prediction horizon. To account for the latency, I simply return the actuator inputs two timesteps in the future (2*dt where dt=50ms). This simple approach proves effective.
 
 ---
 
