@@ -10,7 +10,6 @@ Self-Driving Car Engineer Nanodegree Program
 ## Introduction
 This project involved developing a non-linear model predictive controller (MPC) to drive a car around the simulated track provided in the [Udacity Self-Driving Car Simulator](https://github.com/udacity/self-driving-car-sim/releases). For this project, the simulator will provide the cars current x,y position, steering angle and velocity along with a series of waypoints plotting the course the car should follow. The MPC is then used to update the steering angle and acceleration to drive the car along the plotted course.
 
-{: style="text-align:center"}
 ![alt final lap][lap]
 
 ## The Model
